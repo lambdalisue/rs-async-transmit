@@ -19,10 +19,13 @@ This crate relies on [async-trait][], the original definition of the `Transmit` 
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait Transmit<I, E> {
-    async fn transmit(&mut self, item: I) -> Result<(), E>
+pub trait Transmit {
+    type Item;
+    type Error;
+
+    async fn transmit(&mut self, item: Self::Item) -> Result<(), Self::Error>
     where
-        I: 'async_trait;
+        Self::Item: 'async_trait;
 }
 ```
 
@@ -32,14 +35,20 @@ So use `#[async_trait]` to when implement `Transmit` like:
 use async_transmit::*;
 use async_trait::async_trait;
 
-struct VoidTransmitter {}
+struct VoidTransmitter<I, E> {
+    phantom: std::marker::PhantomData<(I, E)>,
+}
 
 #[async_trait]
-impl<I, E> Transmit<I, E> for VoidTransmitter
+impl<I, E> Transmit for VoidTransmitter<I, E>
 where
     I: Send,
+    E: Send,
 {
-    async fn transmit(&mut self, item: I) -> Result<(), E>
+    type Item = I;
+    type Error = E;
+
+    async fn transmit(&mut self, item: Self::Item) -> Result<(), Self::Error>
     where
         I: 'async_trait,
     {
@@ -119,7 +128,7 @@ version = "0.1.0"
 features = ["with-sink"]
 ```
 
-Then you can use `Transmit::from_sink()` to create a wrapper object which implements `Transmit`
+Then you can use `async_transmit::from_sink()` to create a wrapper object which implements `Transmit`
 trait like:
 
 ```rust
@@ -127,7 +136,7 @@ use async_transmit::*;
 use futures::prelude::*;
 
 let (s, mut r) = futures::channel::mpsc::unbounded::<&'static str>();
-let mut s = Transmit::from_sink(s);
+let mut s = from_sink(s);
 
 s.transmit("Hello").await?;
 s.transmit("World").await?;
