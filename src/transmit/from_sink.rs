@@ -17,6 +17,23 @@ impl<S, I, E> FromSink<S, I, E> {
             phantom: PhantomData,
         }
     }
+
+    /// Consumes this transmit, returning the underlying sink.
+    pub fn into_inner(self) -> S {
+        self.sink
+    }
+
+    /// Acquires a reference to the underlying sink that this
+    /// transmit is pulling from.
+    pub fn get_ref(&self) -> &S {
+        &self.sink
+    }
+
+    /// Acquires a mutable reference to the underlying sink that
+    /// this transmit is pulling from.
+    pub fn get_mut(&mut self) -> &mut S {
+        &mut self.sink
+    }
 }
 
 #[async_trait]
