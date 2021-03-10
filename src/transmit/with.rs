@@ -6,7 +6,7 @@ use crate::transmit::Transmit;
 pub struct With<T, F, I, U, E> {
     inner: T,
     f: F,
-    phantom: PhantomData<(I, U, E)>
+    phantom: PhantomData<(I, U, E)>,
 }
 
 impl<T, F, I, U, E> With<T, F, I, U, E>
@@ -55,4 +55,3 @@ where
         self.inner.transmit(item).await
     }
 }
-

@@ -9,8 +9,7 @@ use async_trait::async_trait;
 /// if the transmission has succeeded.
 #[must_use = "transmit do nothing unless polled"]
 #[async_trait]
-pub trait Transmit<I, E>
-{
+pub trait Transmit<I, E> {
     /// Attempts to transmit a value to the peer asynchronously.
     async fn transmit(&mut self, item: I) -> Result<(), E>
     where
@@ -44,17 +43,17 @@ pub use from_sink::*;
 mod with;
 pub use with::With;
 
-impl<T: ?Sized, I, E> TransmitExt<I, E> for T 
-where 
+impl<T: ?Sized, I, E> TransmitExt<I, E> for T
+where
     T: Transmit<I, E>,
     I: Send,
     E: Send,
-{}
+{
+}
 
 /// An extension trait for `Transmit`s that provides a variety of convenient
 /// functions.
-pub trait TransmitExt<I, E>: Transmit<I, E>
-{
+pub trait TransmitExt<I, E>: Transmit<I, E> {
     #[cfg(feature = "with-sink")]
     /// Create `FromSink` object which implements `Transmit` trait from an object which implements
     /// `futures::sink::Sink`.
