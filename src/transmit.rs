@@ -9,7 +9,8 @@ use async_trait::async_trait;
 /// if the transmission has succeeded.
 #[must_use = "transmit do nothing unless polled"]
 #[async_trait]
-pub trait Transmit<I, E> {
+pub trait Transmit<I, E>
+{
     /// Attempts to transmit a value to the peer asynchronously.
     async fn transmit(&mut self, item: I) -> Result<(), E>
     where
@@ -40,11 +41,20 @@ mod from_sink;
 #[cfg(feature = "with-sink")]
 pub use from_sink::*;
 
-impl<T: ?Sized, I, E> TransmitExt<I, E> for T where T: Transmit<I, E> {}
+mod with;
+pub use with::With;
+
+impl<T: ?Sized, I, E> TransmitExt<I, E> for T 
+where 
+    T: Transmit<I, E>,
+    I: Send,
+    E: Send,
+{}
 
 /// An extension trait for `Transmit`s that provides a variety of convenient
 /// functions.
-pub trait TransmitExt<I, E>: Transmit<I, E> {
+pub trait TransmitExt<I, E>: Transmit<I, E>
+{
     #[cfg(feature = "with-sink")]
     /// Create `FromSink` object which implements `Transmit` trait from an object which implements
     /// `futures::sink::Sink`.
@@ -55,6 +65,17 @@ pub trait TransmitExt<I, E>: Transmit<I, E> {
         S: futures_sink::Sink<I, Error = E> + Unpin + Send,
     {
         assert_transmit::<I, E, _>(from_sink::FromSink::from(sink))
+    }
+
+    fn with<F, U>(self, f: F) -> with::With<Self, F, I, U, E>
+    where
+        Self: Sized + Send,
+        I: Send,
+        E: Send,
+        F: FnMut(U) -> I + Send,
+        U: Send,
+    {
+        assert_transmit::<U, E, _>(with::With::new(self, f))
     }
 }
 
@@ -79,6 +100,22 @@ mod sink_tests {
         drop(t);
         assert_eq!(r.next().await, Some("Hello"));
         assert_eq!(r.next().await, Some("World"));
+        assert_eq!(r.next().await, None);
+
+        Ok(())
+    }
+
+    #[async_test]
+    async fn transmit_ext_with_is_transmit() -> Result<()> {
+        let (s, mut r) = mpsc::unbounded::<String>();
+
+        let t = assert_transmit(Transmit::from_sink(s));
+        let mut t = t.with(|s| format!("!!!{}!!!", s));
+        assert_eq!((), t.transmit("Hello").await?);
+        assert_eq!((), t.transmit("World").await?);
+        drop(t);
+        assert_eq!(r.next().await, Some("!!!Hello!!!".to_string()));
+        assert_eq!(r.next().await, Some("!!!World!!!".to_string()));
         assert_eq!(r.next().await, None);
 
         Ok(())

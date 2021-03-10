@@ -29,6 +29,7 @@
 //! impl<I, E> Transmit<I, E> for VoidTransmitter
 //! where
 //!     I: Send,
+//!     E: Send,
 //! {
 //!     async fn transmit(&mut self, item: I) -> Result<(), E>
 //!     where
