@@ -5,22 +5,28 @@ use tokio::sync::mpsc::{Sender, UnboundedSender};
 use crate::transmit::Transmit;
 
 #[async_trait]
-impl<I> Transmit<I, SendError<I>> for Sender<I>
+impl<I> Transmit for Sender<I>
 where
     I: Send,
 {
-    async fn transmit(&mut self, item: I) -> Result<(), SendError<I>> {
+    type Item = I;
+    type Error = SendError<I>;
+
+    async fn transmit(&mut self, item: Self::Item) -> Result<(), Self::Error> {
         Sender::send(self, item).await?;
         Ok(())
     }
 }
 
 #[async_trait]
-impl<I> Transmit<I, SendError<I>> for UnboundedSender<I>
+impl<I> Transmit for UnboundedSender<I>
 where
     I: Send,
 {
-    async fn transmit(&mut self, item: I) -> Result<(), SendError<I>> {
+    type Item = I;
+    type Error = SendError<I>;
+
+    async fn transmit(&mut self, item: Self::Item) -> Result<(), Self::Error> {
         UnboundedSender::send(self, item)?;
         Ok(())
     }

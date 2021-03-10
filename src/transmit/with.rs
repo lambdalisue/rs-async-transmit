@@ -11,7 +11,7 @@ pub struct With<T, F, I, U, E> {
 
 impl<T, F, I, U, E> With<T, F, I, U, E>
 where
-    T: Transmit<I, E> + Send,
+    T: Transmit<Item = I, Error = E> + Send,
     I: Send,
     E: Send,
 {
@@ -42,15 +42,18 @@ where
 }
 
 #[async_trait]
-impl<T, F, I, U, E> Transmit<U, E> for With<T, F, I, U, E>
+impl<T, F, I, U, E> Transmit for With<T, F, I, U, E>
 where
-    T: Transmit<I, E> + Send,
+    T: Transmit<Item = I, Error = E> + Send,
     F: FnMut(U) -> I + Send,
     I: Send,
     U: Send,
     E: Send,
 {
-    async fn transmit(&mut self, item: U) -> Result<(), E> {
+    type Item = U;
+    type Error = E;
+
+    async fn transmit(&mut self, item: Self::Item) -> Result<(), Self::Error> {
         let item = (self.f)(item);
         self.inner.transmit(item).await
     }

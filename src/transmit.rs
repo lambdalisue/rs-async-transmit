@@ -9,18 +9,21 @@ use async_trait::async_trait;
 /// if the transmission has succeeded.
 #[must_use = "transmit do nothing unless polled"]
 #[async_trait]
-pub trait Transmit<I, E> {
+pub trait Transmit {
+    type Item;
+    type Error;
+
     /// Attempts to transmit a value to the peer asynchronously.
-    async fn transmit(&mut self, item: I) -> Result<(), E>
+    async fn transmit(&mut self, item: Self::Item) -> Result<(), Self::Error>
     where
-        I: 'async_trait;
+        Self::Item: 'async_trait;
 }
 
 /// A helper function to make sure the value is 'Transmit'
 #[allow(dead_code)]
 pub(crate) fn assert_transmit<I, E, T>(t: T) -> T
 where
-    T: Transmit<I, E>,
+    T: Transmit<Item = I, Error = E>,
 {
     t
 }
@@ -38,43 +41,37 @@ pub use self::tokio::*;
 #[cfg(feature = "with-sink")]
 mod from_sink;
 #[cfg(feature = "with-sink")]
-pub use from_sink::*;
+pub use from_sink::FromSink;
 
 mod with;
 pub use with::With;
 
-impl<T: ?Sized, I, E> TransmitExt<I, E> for T
+impl<T: ?Sized> TransmitExt for T where T: Transmit {}
+
+/// Create `FromSink` object which implements `Transmit` trait from an object which implements
+/// `futures::sink::Sink`.
+#[cfg(feature = "with-sink")]
+pub fn from_sink<S, I>(sink: S) -> FromSink<S, I, S::Error>
 where
-    T: Transmit<I, E>,
+    S: futures_sink::Sink<I> + Unpin + Send,
     I: Send,
-    E: Send,
+    S::Error: Send,
 {
+    assert_transmit::<I, S::Error, _>(from_sink::FromSink::from(sink))
 }
 
 /// An extension trait for `Transmit`s that provides a variety of convenient
 /// functions.
-pub trait TransmitExt<I, E>: Transmit<I, E> {
-    #[cfg(feature = "with-sink")]
-    /// Create `FromSink` object which implements `Transmit` trait from an object which implements
-    /// `futures::sink::Sink`.
-    fn from_sink<S>(sink: S) -> from_sink::FromSink<S, I, E>
-    where
-        I: Send,
-        E: Send,
-        S: futures_sink::Sink<I, Error = E> + Unpin + Send,
-    {
-        assert_transmit::<I, E, _>(from_sink::FromSink::from(sink))
-    }
-
-    fn with<F, U>(self, f: F) -> with::With<Self, F, I, U, E>
+pub trait TransmitExt: Transmit {
+    fn with<F, U>(self, f: F) -> with::With<Self, F, Self::Item, U, Self::Error>
     where
         Self: Sized + Send,
-        I: Send,
-        E: Send,
-        F: FnMut(U) -> I + Send,
+        Self::Item: Send,
+        Self::Error: Send,
+        F: FnMut(U) -> Self::Item + Send,
         U: Send,
     {
-        assert_transmit::<U, E, _>(with::With::new(self, f))
+        assert_transmit::<U, Self::Error, _>(with::With::new(self, f))
     }
 }
 
@@ -93,7 +90,7 @@ mod sink_tests {
     async fn transmit_ext_from_sink_is_transmit() -> Result<()> {
         let (s, mut r) = mpsc::unbounded::<&'static str>();
 
-        let mut t = assert_transmit(Transmit::from_sink(s));
+        let mut t = assert_transmit(from_sink(s));
         assert_eq!((), t.transmit("Hello").await?);
         assert_eq!((), t.transmit("World").await?);
         drop(t);
@@ -108,7 +105,7 @@ mod sink_tests {
     async fn transmit_ext_with_is_transmit() -> Result<()> {
         let (s, mut r) = mpsc::unbounded::<String>();
 
-        let t = assert_transmit(Transmit::from_sink(s));
+        let t = assert_transmit(from_sink(s));
         let mut t = t.with(|s| format!("!!!{}!!!", s));
         assert_eq!((), t.transmit("Hello").await?);
         assert_eq!((), t.transmit("World").await?);

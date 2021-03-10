@@ -37,13 +37,16 @@ impl<S, I, E> FromSink<S, I, E> {
 }
 
 #[async_trait]
-impl<S, I> Transmit<I, S::Error> for FromSink<S, I, S::Error>
+impl<S, I> Transmit for FromSink<S, I, S::Error>
 where
     I: Send,
     S: Sink<I> + Unpin + Send,
     S::Error: Send,
 {
-    async fn transmit(&mut self, item: I) -> Result<(), S::Error> {
+    type Item = I;
+    type Error = S::Error;
+
+    async fn transmit(&mut self, item: Self::Item) -> Result<(), Self::Error> {
         SinkExt::send(&mut self.sink, item).await?;
         Ok(())
     }
