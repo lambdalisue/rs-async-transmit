@@ -69,6 +69,7 @@
 //! # use anyhow::Result;
 //! # use futures::executor;
 //! # fn main() -> Result<()> {
+//! # #[cfg(feature = "with-async-channel")]
 //! # executor::block_on(async {
 //! use async_transmit::*;
 //!
@@ -80,8 +81,9 @@
 //! assert_eq!(Some("Hello"), r.recv().await.ok());
 //! assert_eq!(Some("World"), r.recv().await.ok());
 //! assert_eq!(None, r.recv().await.ok());
+//! # Ok(()) as Result<()>
+//! # })?;
 //! # Ok(())
-//! # })
 //! # }
 //! ```
 //!
@@ -105,6 +107,7 @@
 //! # use anyhow::Result;
 //! # use futures::executor;
 //! # fn main() -> Result<()> {
+//! # #[cfg(feature = "with-tokio")]
 //! # executor::block_on(async {
 //! use async_transmit::*;
 //!
@@ -116,8 +119,9 @@
 //! assert_eq!(Some("Hello"), r.recv().await);
 //! assert_eq!(Some("World"), r.recv().await);
 //! assert_eq!(None, r.recv().await);
+//! # Ok(()) as Result<()>
+//! # })?;
 //! # Ok(())
-//! # })
 //! # }
 //! ```
 //!
@@ -140,6 +144,7 @@
 //! # use anyhow::Result;
 //! # use futures::executor;
 //! # fn main() -> Result<()> {
+//! # #[cfg(feature = "with-sink")]
 //! # executor::block_on(async {
 //! use async_transmit::*;
 //! use futures::prelude::*;
@@ -153,13 +158,14 @@
 //! assert_eq!(Some("Hello"), r.next().await);
 //! assert_eq!(Some("World"), r.next().await);
 //! assert_eq!(None, r.next().await);
+//! # Ok(()) as Result<()>
+//! # })?;
 //! # Ok(())
-//! # })
 //! # }
 //! ```
 //!
 #![doc(test(attr(deny(rust_2018_idioms, warnings))))]
-#![doc(test(attr(allow(unused_extern_crates, unused_variables))))]
+#![doc(test(attr(allow(unused_extern_crates, unused_variables, unused_imports))))]
 #![recursion_limit = "2048"]
 
 mod transmit;
