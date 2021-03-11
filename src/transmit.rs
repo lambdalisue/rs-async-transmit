@@ -76,8 +76,7 @@ pub trait TransmitExt: Transmit {
 }
 
 #[cfg(test)]
-#[cfg(feature = "with-sink")]
-mod sink_tests {
+mod tests {
     use super::assert_transmit;
     use super::*;
 
@@ -86,6 +85,7 @@ mod sink_tests {
     use futures::prelude::*;
     use futures_await_test::async_test;
 
+    #[cfg(feature = "with-sink")]
     #[async_test]
     async fn transmit_ext_from_sink_is_transmit() -> Result<()> {
         let (s, mut r) = mpsc::unbounded::<&'static str>();
