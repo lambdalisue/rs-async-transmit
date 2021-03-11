@@ -19,6 +19,24 @@ pub trait Transmit {
         Self::Item: 'async_trait;
 }
 
+#[async_trait]
+impl<T> Transmit for &mut T
+where
+    T: Transmit + Send + ?Sized,
+    T::Item: Send,
+{
+    type Item = T::Item;
+    type Error = T::Error;
+
+    async fn transmit(&mut self, item: Self::Item) -> Result<(), Self::Error>
+    where
+        Self::Item: 'async_trait,
+    {
+        let this = &mut **self;
+        this.transmit(item).await
+    }
+}
+
 /// A helper function to make sure the value is 'Transmit'
 #[allow(dead_code)]
 pub(crate) fn assert_transmit<I, E, T>(t: T) -> T
@@ -84,6 +102,31 @@ mod tests {
     use futures::channel::mpsc;
     use futures::prelude::*;
     use futures_await_test::async_test;
+
+    #[test]
+    fn transmit_mut_ref_ok() -> Result<()> {
+        struct DummyTransmitter {}
+
+        #[async_trait]
+        impl Transmit for DummyTransmitter {
+            type Item = String;
+            type Error = anyhow::Error;
+
+            async fn transmit(&mut self, _item: Self::Item) -> Result<(), Self::Error>
+            where
+                Self::Item: 'async_trait,
+            {
+                unimplemented!();
+            }
+        }
+
+        let mut t = DummyTransmitter {};
+        let mut_t = &mut t;
+
+        assert_transmit(mut_t);
+
+        Ok(())
+    }
 
     #[cfg(feature = "with-sink")]
     #[async_test]
