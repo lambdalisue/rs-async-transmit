@@ -72,7 +72,7 @@ impl<T: ?Sized> TransmitExt for T where T: Transmit {}
 /// Create `FromSink` object which implements `Transmit` trait from an object which implements
 /// `futures::sink::Sink`.
 #[cfg(feature = "with-sink")]
-pub fn from_sink<S, I>(sink: S) -> FromSink<S, I, S::Error>
+pub fn from_sink<S, I>(sink: S) -> FromSink<S, I>
 where
     S: futures_sink::Sink<I> + Unpin + Send,
     I: Send,
