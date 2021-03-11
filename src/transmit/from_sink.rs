@@ -5,12 +5,12 @@ use std::marker::PhantomData;
 
 use crate::transmit::Transmit;
 
-pub struct FromSink<S, I, E> {
+pub struct FromSink<S, I> {
     sink: S,
-    phantom: PhantomData<(I, E)>,
+    phantom: PhantomData<I>,
 }
 
-impl<S, I, E> FromSink<S, I, E> {
+impl<S, I> FromSink<S, I> {
     fn new(sink: S) -> Self {
         Self {
             sink,
@@ -37,7 +37,7 @@ impl<S, I, E> FromSink<S, I, E> {
 }
 
 #[async_trait]
-impl<S, I> Transmit for FromSink<S, I, S::Error>
+impl<S, I> Transmit for FromSink<S, I>
 where
     I: Send,
     S: Sink<I> + Unpin + Send,
@@ -52,7 +52,7 @@ where
     }
 }
 
-impl<S, I> From<S> for FromSink<S, I, S::Error>
+impl<S, I> From<S> for FromSink<S, I>
 where
     S: Sink<I>,
 {

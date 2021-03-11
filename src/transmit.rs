@@ -64,12 +64,15 @@ pub use from_sink::FromSink;
 mod with;
 pub use with::With;
 
+mod transmit_map_err;
+pub use transmit_map_err::TransmitMapErr;
+
 impl<T: ?Sized> TransmitExt for T where T: Transmit {}
 
 /// Create `FromSink` object which implements `Transmit` trait from an object which implements
 /// `futures::sink::Sink`.
 #[cfg(feature = "with-sink")]
-pub fn from_sink<S, I>(sink: S) -> FromSink<S, I, S::Error>
+pub fn from_sink<S, I>(sink: S) -> FromSink<S, I>
 where
     S: futures_sink::Sink<I> + Unpin + Send,
     I: Send,
@@ -90,6 +93,15 @@ pub trait TransmitExt: Transmit {
         U: Send,
     {
         assert_transmit::<U, Self::Error, _>(with::With::new(self, f))
+    }
+
+    fn transmit_map_err<E, F>(self, f: F) -> TransmitMapErr<Self, F>
+    where
+        Self: Sized + Send,
+        Self::Item: Send,
+        F: FnOnce(Self::Error) -> E + Send,
+    {
+        assert_transmit::<Self::Item, E, _>(TransmitMapErr::new(self, f))
     }
 }
 
@@ -148,7 +160,27 @@ mod tests {
     async fn transmit_ext_with_is_transmit() -> Result<()> {
         let (s, mut r) = mpsc::unbounded::<String>();
 
-        let t = assert_transmit(from_sink(s));
+        struct DummyTransmitter<T> {
+            sender: mpsc::UnboundedSender<T>,
+        }
+
+        #[async_trait]
+        impl<T> Transmit for DummyTransmitter<T>
+        where
+            T: Send,
+        {
+            type Item = T;
+            type Error = anyhow::Error;
+
+            async fn transmit(&mut self, item: Self::Item) -> Result<(), Self::Error>
+            where
+                Self::Item: 'async_trait,
+            {
+                self.sender.send(item).await.map_err(Into::into)
+            }
+        }
+
+        let t = assert_transmit(DummyTransmitter { sender: s });
         let mut t = t.with(|s| format!("!!!{}!!!", s));
         assert_eq!((), t.transmit("Hello").await?);
         assert_eq!((), t.transmit("World").await?);
@@ -156,6 +188,37 @@ mod tests {
         assert_eq!(r.next().await, Some("!!!Hello!!!".to_string()));
         assert_eq!(r.next().await, Some("!!!World!!!".to_string()));
         assert_eq!(r.next().await, None);
+
+        Ok(())
+    }
+
+    #[async_test]
+    async fn transmit_ext_transmit_map_err_is_transmit() -> Result<()> {
+        struct DummyTransmitter {}
+
+        #[async_trait]
+        impl Transmit for DummyTransmitter {
+            type Item = &'static str;
+            type Error = String;
+
+            async fn transmit(&mut self, _item: Self::Item) -> Result<(), Self::Error>
+            where
+                Self::Item: 'async_trait,
+            {
+                Err("Hello World".to_string())
+            }
+        }
+
+        let mut t = assert_transmit(DummyTransmitter {});
+        assert_eq!(
+            "Hello World".to_string(),
+            t.transmit("Hello").await.err().unwrap()
+        );
+        let mut t = t.transmit_map_err(|e| anyhow::anyhow!("!!!{}!!!", e));
+        assert_eq!(
+            "!!!Hello World!!!",
+            format!("{:?}", t.transmit("Hello").await.err().unwrap())
+        );
 
         Ok(())
     }
