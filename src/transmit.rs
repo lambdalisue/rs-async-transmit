@@ -148,7 +148,27 @@ mod tests {
     async fn transmit_ext_with_is_transmit() -> Result<()> {
         let (s, mut r) = mpsc::unbounded::<String>();
 
-        let t = assert_transmit(from_sink(s));
+        struct DummyTransmitter<T> {
+            sender: mpsc::UnboundedSender<T>,
+        }
+
+        #[async_trait]
+        impl<T> Transmit for DummyTransmitter<T>
+        where
+            T: Send,
+        {
+            type Item = T;
+            type Error = anyhow::Error;
+
+            async fn transmit(&mut self, item: Self::Item) -> Result<(), Self::Error>
+            where
+                Self::Item: 'async_trait,
+            {
+                self.sender.send(item).await.map_err(Into::into)
+            }
+        }
+
+        let t = assert_transmit(DummyTransmitter { sender: s });
         let mut t = t.with(|s| format!("!!!{}!!!", s));
         assert_eq!((), t.transmit("Hello").await?);
         assert_eq!((), t.transmit("World").await?);
