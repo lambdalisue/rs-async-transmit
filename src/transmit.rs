@@ -64,6 +64,9 @@ pub use from_sink::FromSink;
 mod with;
 pub use with::With;
 
+mod transmit_map_err;
+pub use transmit_map_err::TransmitMapErr;
+
 impl<T: ?Sized> TransmitExt for T where T: Transmit {}
 
 /// Create `FromSink` object which implements `Transmit` trait from an object which implements
@@ -90,6 +93,15 @@ pub trait TransmitExt: Transmit {
         U: Send,
     {
         assert_transmit::<U, Self::Error, _>(with::With::new(self, f))
+    }
+
+    fn transmit_map_err<E, F>(self, f: F) -> TransmitMapErr<Self, F>
+    where
+        Self: Sized + Send,
+        Self::Item: Send,
+        F: FnOnce(Self::Error) -> E + Send,
+    {
+        assert_transmit::<Self::Item, E, _>(TransmitMapErr::new(self, f))
     }
 }
 
@@ -176,6 +188,37 @@ mod tests {
         assert_eq!(r.next().await, Some("!!!Hello!!!".to_string()));
         assert_eq!(r.next().await, Some("!!!World!!!".to_string()));
         assert_eq!(r.next().await, None);
+
+        Ok(())
+    }
+
+    #[async_test]
+    async fn transmit_ext_transmit_map_err_is_transmit() -> Result<()> {
+        struct DummyTransmitter {}
+
+        #[async_trait]
+        impl Transmit for DummyTransmitter {
+            type Item = &'static str;
+            type Error = String;
+
+            async fn transmit(&mut self, _item: Self::Item) -> Result<(), Self::Error>
+            where
+                Self::Item: 'async_trait,
+            {
+                Err("Hello World".to_string())
+            }
+        }
+
+        let mut t = assert_transmit(DummyTransmitter {});
+        assert_eq!(
+            "Hello World".to_string(),
+            t.transmit("Hello").await.err().unwrap()
+        );
+        let mut t = t.transmit_map_err(|e| anyhow::anyhow!("!!!{}!!!", e));
+        assert_eq!(
+            "!!!Hello World!!!",
+            format!("{:?}", t.transmit("Hello").await.err().unwrap())
+        );
 
         Ok(())
     }
