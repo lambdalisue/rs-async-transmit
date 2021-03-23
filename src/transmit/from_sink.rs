@@ -5,6 +5,7 @@ use std::marker::PhantomData;
 
 use crate::transmit::Transmit;
 
+#[derive(Debug)]
 pub struct FromSink<S, I> {
     sink: S,
     phantom: PhantomData<I>,

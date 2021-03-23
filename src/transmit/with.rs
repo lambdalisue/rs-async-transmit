@@ -3,6 +3,7 @@ use core::marker::PhantomData;
 
 use crate::transmit::Transmit;
 
+#[derive(Debug)]
 pub struct With<T, F, I, U, E> {
     inner: T,
     f: F,
