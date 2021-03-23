@@ -2,6 +2,7 @@ use async_trait::async_trait;
 
 use crate::transmit::Transmit;
 
+#[derive(Debug)]
 pub struct TransmitMapErr<T, F> {
     inner: T,
     f: Option<F>,
