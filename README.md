@@ -1,4 +1,5 @@
 [![crates.io](https://img.shields.io/crates/v/async-transmit.svg)](https://crates.io/crates/async-transmit)
+[![dependency status](https://deps.rs/repo/github/lambdalisue/rs-async-transmit/status.svg)](https://deps.rs/repo/github/lambdalisue/rs-async-transmit)
 [![docs.rs](https://docs.rs/async-transmit/badge.svg)](https://docs.rs/async-transmit)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![Build](https://github.com/lambdalisue/rs-async-transmit/actions/workflows/build.yml/badge.svg)](https://github.com/lambdalisue/rs-async-transmit/actions/workflows/build.yml)
