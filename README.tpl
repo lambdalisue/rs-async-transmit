@@ -4,6 +4,7 @@
 [![Build](https://github.com/lambdalisue/rs-async-transmit/actions/workflows/build.yml/badge.svg)](https://github.com/lambdalisue/rs-async-transmit/actions/workflows/build.yml)
 [![Test](https://github.com/lambdalisue/rs-async-transmit/actions/workflows/test.yml/badge.svg)](https://github.com/lambdalisue/rs-async-transmit/actions/workflows/test.yml)
 [![Audit](https://github.com/lambdalisue/rs-async-transmit/actions/workflows/audit.yml/badge.svg)](https://github.com/lambdalisue/rs-async-transmit/actions/workflows/audit.yml)
+[![codecov](https://codecov.io/github/lambdalisue/rs-async-transmit/branch/main/graph/badge.svg?token=O2TF00WUP7)](https://codecov.io/github/lambdalisue/rs-async-transmit)
 
 # {{crate}}
 

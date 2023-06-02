@@ -5,6 +5,7 @@
 [![Build](https://github.com/lambdalisue/rs-async-transmit/actions/workflows/build.yml/badge.svg)](https://github.com/lambdalisue/rs-async-transmit/actions/workflows/build.yml)
 [![Test](https://github.com/lambdalisue/rs-async-transmit/actions/workflows/test.yml/badge.svg)](https://github.com/lambdalisue/rs-async-transmit/actions/workflows/test.yml)
 [![Audit](https://github.com/lambdalisue/rs-async-transmit/actions/workflows/audit.yml/badge.svg)](https://github.com/lambdalisue/rs-async-transmit/actions/workflows/audit.yml)
+[![codecov](https://codecov.io/github/lambdalisue/rs-async-transmit/branch/main/graph/badge.svg?token=O2TF00WUP7)](https://codecov.io/github/lambdalisue/rs-async-transmit)
 
 # async-transmit
 
@@ -64,8 +65,8 @@ where
 If you'd like to play with [`async_std::channel::Sender`][] or [`async_channel::Sender`][],
 use `with-async-channel` feature like:
 
-[`async_std::channel::Sender`]: https://docs.rs/async-std/1.9.0/async_std/channel/struct.Sender.html
-[`async_channel::Sender`]: https://docs.rs/async-channel/1.6.1/async_channel/struct.Sender.html
+[`async_std::channel::sender`]: https://docs.rs/async-std/1.9.0/async_std/channel/struct.Sender.html
+[`async_channel::sender`]: https://docs.rs/async-channel/1.6.1/async_channel/struct.Sender.html
 
 ```toml
 [dependencies.async-transmit]
@@ -93,8 +94,8 @@ assert_eq!(None, r.recv().await.ok());
 If you'd like to play with [`tokio::sync::mpsc::Sender`][] or [`tokio::sync::mpsc::UnboundedSender`],
 use `with-tokio` feature like:
 
-[`tokio::sync::mpsc::Sender`]: https://docs.rs/tokio/1.3.0/tokio/sync/mpsc/struct.Sender.html
-[`tokio::sync::mpsc::UnboundedSender`]: https://docs.rs/tokio/1.3.0/tokio/sync/mpsc/struct.UnboundedSender.html
+[`tokio::sync::mpsc::sender`]: https://docs.rs/tokio/1.3.0/tokio/sync/mpsc/struct.Sender.html
+[`tokio::sync::mpsc::unboundedsender`]: https://docs.rs/tokio/1.3.0/tokio/sync/mpsc/struct.UnboundedSender.html
 
 ```toml
 [dependencies.async-transmit]
@@ -121,7 +122,7 @@ assert_eq!(None, r.recv().await);
 
 If you'd like to play with [`futures::sink::Sink`], use `with-sink` feature like:
 
-[`futures::sink::Sink`]: https://docs.rs/futures/0.3.13/futures/sink/trait.Sink.html
+[`futures::sink::sink`]: https://docs.rs/futures/0.3.13/futures/sink/trait.Sink.html
 
 ```toml
 [dependencies.async-transmit]
@@ -146,7 +147,6 @@ assert_eq!(Some("Hello"), r.next().await);
 assert_eq!(Some("World"), r.next().await);
 assert_eq!(None, r.next().await);
 ```
-
 
 # License
 

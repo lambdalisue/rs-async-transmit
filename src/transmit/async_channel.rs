@@ -30,8 +30,8 @@ mod tests {
         let (s, r) = async_channel::unbounded::<&'static str>();
 
         let mut t = assert_transmit(s);
-        assert_eq!((), t.transmit("Hello").await?);
-        assert_eq!((), t.transmit("World").await?);
+        t.transmit("Hello").await?;
+        t.transmit("World").await?;
         drop(t);
         assert_eq!(r.recv().await.ok(), Some("Hello"));
         assert_eq!(r.recv().await.ok(), Some("World"));
