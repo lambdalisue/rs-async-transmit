@@ -45,8 +45,8 @@ mod tests {
         let (s, mut r) = tokio::sync::mpsc::channel::<&'static str>(10);
 
         let mut t = assert_transmit(s);
-        assert_eq!((), t.transmit("Hello").await?);
-        assert_eq!((), t.transmit("World").await?);
+        t.transmit("Hello").await?;
+        t.transmit("World").await?;
         drop(t);
         assert_eq!(r.recv().await, Some("Hello"));
         assert_eq!(r.recv().await, Some("World"));
@@ -60,8 +60,8 @@ mod tests {
         let (s, mut r) = tokio::sync::mpsc::unbounded_channel::<&'static str>();
 
         let mut t = assert_transmit(s);
-        assert_eq!((), t.transmit("Hello").await?);
-        assert_eq!((), t.transmit("World").await?);
+        t.transmit("Hello").await?;
+        t.transmit("World").await?;
         drop(t);
         assert_eq!(r.recv().await, Some("Hello"));
         assert_eq!(r.recv().await, Some("World"));

@@ -146,8 +146,8 @@ mod tests {
         let (s, mut r) = mpsc::unbounded::<&'static str>();
 
         let mut t = assert_transmit(from_sink(s));
-        assert_eq!((), t.transmit("Hello").await?);
-        assert_eq!((), t.transmit("World").await?);
+        t.transmit("Hello").await?;
+        t.transmit("World").await?;
         drop(t);
         assert_eq!(r.next().await, Some("Hello"));
         assert_eq!(r.next().await, Some("World"));
@@ -182,8 +182,8 @@ mod tests {
 
         let t = assert_transmit(DummyTransmitter { sender: s });
         let mut t = t.with(|s| format!("!!!{}!!!", s));
-        assert_eq!((), t.transmit("Hello").await?);
-        assert_eq!((), t.transmit("World").await?);
+        t.transmit("Hello").await?;
+        t.transmit("World").await?;
         drop(t);
         assert_eq!(r.next().await, Some("!!!Hello!!!".to_string()));
         assert_eq!(r.next().await, Some("!!!World!!!".to_string()));

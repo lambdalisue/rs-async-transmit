@@ -77,8 +77,8 @@ mod tests {
         let (s, mut r) = mpsc::unbounded::<&'static str>();
 
         let mut t = assert_transmit(FromSink::from(s));
-        assert_eq!((), t.transmit("Hello").await?);
-        assert_eq!((), t.transmit("World").await?);
+        t.transmit("Hello").await?;
+        t.transmit("World").await?;
         drop(t);
         assert_eq!(r.next().await, Some("Hello"));
         assert_eq!(r.next().await, Some("World"));
